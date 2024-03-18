@@ -4,6 +4,10 @@
 
     const { routes, stops, stopTimes, trips } = data;
 
+    export function clickme() {
+        console.log('hi')
+    }
+
     let vehiclePositions = [];
     const fetchInterval = 5000; // Fetch data every 5000 ms (5 seconds)
   
@@ -90,6 +94,11 @@
     {:else}
         <p>Loading routes...</p>
     {/if}
+
+    <div class="route">
+        <p>hello</p>
+        <div class="shuttle" on:click={clickme}>X</div>
+    </div>
 </main>
 
 <style>
@@ -112,4 +121,25 @@
 			max-width: none;
 		}
 	}
+
+    .route {
+        width: 500px;
+        border-style: solid;
+        border-radius: 10px;
+        border-color: black;
+        position: relative;
+        z-index: 0;
+    }
+
+    .shuttle {
+        width: 20px;
+        border-style: solid;
+        border-radius: 5px;
+        border-color: red;
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        background-color: white;
+        z-index: 1;
+    }
 </style>
