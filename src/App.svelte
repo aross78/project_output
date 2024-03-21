@@ -1,11 +1,13 @@
 <script>
 	export let name;
 	import Position from './lib/Position.svelte'
+	import Route from './lib/Route.svelte'
 </script>
 
 <main>
-	<h1>Hello {name}!</h1>
+	<h1>Super Passio Go.</h1>
 	<Position />
+	<Route />
 </main>
 
 <style>
