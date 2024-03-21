@@ -14,10 +14,12 @@
 		padding: 1em;
 		max-width: 240px;
 		margin: 0 auto;
+		background-color: #605D7F;
+		font-family: 'Silkscreen';
 	}
 
 	h1 {
-		color: #ff3e00;
+		color: #ffffff;
 		text-transform: uppercase;
 		font-size: 4em;
 		font-weight: 100;
