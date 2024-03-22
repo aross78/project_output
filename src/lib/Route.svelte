@@ -1,9 +1,11 @@
 <script>
+    import routesInfo from '../static/route_info.json';
+
     let cars = [
       { id: 1, position: 0 },
       { id: 2, position: 180 }, // Position in degrees around the ellipse
     ];
-  
+    
     // Ellipse radius
     const rx = 90; // x radius
     const ry = 45; // y radius
