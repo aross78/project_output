@@ -57,7 +57,8 @@
         5049,
         60
       ]
-    ]
+    ],
+    "color": "#000000"
   },
   {
     "route_name":"Allston Loop",
@@ -182,7 +183,8 @@
         58343,
         180
       ]
-    ]
+    ],
+    "color": "#FF4BF0"
   },
   {
     "route_name":"Crimson Cruiser",
@@ -289,7 +291,8 @@
         5046,
         60
       ]
-    ]
+    ],
+    "color": "#000000"
   },
   {
     "route_name":"HUIT Route",
@@ -328,7 +331,8 @@
         58381,
         900
       ]
-    ]
+    ],
+    "color": "#000000"
   },
   {
     "route_name":"Mather Express",
@@ -419,7 +423,8 @@
         5046,
         60
       ]
-    ]
+    ],
+    "color": "#08FFFF"
   },
   {
     "route_name":"Overnight",
@@ -533,7 +538,8 @@
         5046,
         60
       ]
-    ]
+    ],
+    "color": "#773DFF"
   },
   {
     "route_name":"Quad Express",
@@ -633,7 +639,8 @@
         5044,
         60
       ]
-    ]
+    ],
+    "color": "#75FF08"
   },
   {
     "route_name":"Quad SEC Direct",
@@ -759,7 +766,8 @@
         58343,
         60
       ]
-    ]
+    ],
+    "color": "#FFA314"
   },
   {
     "route_name":"Quad Stadium Express",
@@ -833,7 +841,8 @@
         5041,
         60
       ]
-    ]
+    ],
+    "color": "#000000"
   },
   {
     "route_name":"Quad Yard Express",
@@ -880,7 +889,8 @@
         5048,
         300
       ]
-    ]
+    ],
+    "color": "#000000"
   },
   {
     "route_name":"SEC Express",
@@ -976,6 +986,7 @@
         58343,
         60
       ]
-    ]
+    ],
+    "color": "#000000"
   }
 ]

@@ -41,13 +41,13 @@
     }
   </script>
   
-  {#each routesInfo as { route_name, stops, schedule }}
+  {#each routesInfo as { route_name, stops, schedule, color }}
   <div>
-    <svg width="400" height="200" viewBox="0 0 200 200">
-      <ellipse cx="100" cy="100" rx="90" ry="45" stroke="black" stroke-width="2" fill="transparent" />
+    <svg width="900" height="600" viewBox="0 0 200 200">
+      <ellipse cx="100" cy="100" rx="90" ry="45" stroke={color} stroke-width="2" fill="transparent" />
       {#each calculateStopPositions(schedule, stops) as { cx, cy, label }}
-        <circle cx={cx} cy={cy} r="3" fill="none" stroke="red" />
-        <text x={cx} y={cy - 5} font-size="5" text-anchor="middle">{label}</text>
+        <circle cx={cx} cy={cy} r="3" fill="none" stroke={color} />
+        <text x={cx} y={cy + 7} font-size="5" text-anchor="middle" fill="white">{label}</text>
       {/each}
     </svg>
     <p>{route_name}</p>
