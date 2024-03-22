@@ -1,6 +1,5 @@
 <script>
 	export let name;
-	import Position from './lib/Position.svelte'
 	import Route from './lib/Route.svelte'
 </script>
 

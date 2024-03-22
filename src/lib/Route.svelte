@@ -1,7 +1,10 @@
 <script>
-    import routesInfo from '../static/route_info.json';
+    import routesInfoData from '../static/route_info.json';
+    import tripToRouteId from '../static/trip_to_route_id.json';
+    import tripToRouteName from '../static/trip_to_route_name.json';
     import { onMount, onDestroy } from 'svelte';
   
+    let routesInfo = [...routesInfoData];
     let vehiclePositions = [];
     let activeRoutes = [];
     const fetchInterval = 2000; 
@@ -19,7 +22,9 @@
           label: entity.vehicle.vehicle.label,
           latitude: entity.vehicle.position.latitude,
           longitude: entity.vehicle.position.longitude,
-          trip: parseInt(entity.vehicle.trip.trip_id, 10)
+          trip: parseInt(entity.vehicle.trip.trip_id, 10),
+          v_route_id: tripToRouteId[entity.vehicle.trip.trip_id],
+          v_route_name: tripToRouteName[entity.vehicle.trip.trip_id],
         }));
       } catch (error) {
         console.error('Failed to fetch vehicle position data:', error);
@@ -40,11 +45,18 @@
     });
   }
 
+  async function updateActiveRoutes(){
+    activeRoutes = routesInfo.filter(route => 
+      route.trip_ids.some(tripId => vehiclePositions.some(vehicle => vehicle.trip === tripId))
+    );
+  }
+
   onMount(() => {
       fetchVehiclePosition(); // Initial fetch
-      const interval = setInterval(fetchVehiclePosition, fetchInterval);
-      
-      activeRoutes = findActiveRoutes();
+      const interval = setInterval(async () => {
+        fetchVehiclePosition();
+        updateActiveRoutes();
+      }, fetchInterval);
   
       // Cleanup the interval when the component is destroyed
       onDestroy(() => {
@@ -52,6 +64,10 @@
       });
     });
   </script>
+
+{#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
+  <p>{route_name}</p>
+{/each}
  
 {#if vehiclePositions.length > 0}
   <div>
@@ -66,7 +82,7 @@
   <p>Loading vehicle positions...</p>
 {/if}
 
-{#each routesInfo as { route, route_name, stops, schedule, color, trip_ids }}
+{#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
   <div>
     <svg width="900" height="600" viewBox="0 0 200 200">
       <ellipse cx="100" cy="100" rx="90" ry="45" stroke={color} stroke-width="2" fill="transparent" />
@@ -75,16 +91,14 @@
         <text x={cx} y={cy + 7} font-size="5" text-anchor="middle" fill="white">{label}</text>
       {/each}
     </svg>
+    {#each vehiclePositions as { v_route_name }}
+        {#if v_route_name == route_name}
+            <p>One active shuttle on {route_name}</p>
+        {/if}
+    {/each}
     <p>{route_name}</p>
   </div>
-  <div>
-    <ul>
-        {#each vehiclePositions as {id, label, latitude, longitude, trip}}
-            {#if trip}
-                <li>hi</li>
-            {/if}
-        {/each}
-    </ul>
-  </div>
-  
+
 {/each}
+
+
