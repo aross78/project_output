@@ -6,7 +6,6 @@
 
 <main>
 	<h1>Super Passio Go.</h1>
-	<Position />
 	<Route />
 </main>
 

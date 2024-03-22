@@ -1,26 +1,35 @@
 <script>
     import routesInfo from '../static/route_info.json';
-
-    let cars = [
-      { id: 1, position: 0 },
-      { id: 2, position: 180 }, // Position in degrees around the ellipse
-    ];
-    
-    // Ellipse radius
-    const rx = 90; // x radius
-    const ry = 45; // y radius
+    import { onMount, onDestroy } from 'svelte';
   
-    setInterval(() => {
-      cars = cars.map(car => ({
-        ...car,
-        position: (car.position + 5) % 360, // Move each car 5 degrees every second
-      }));
-    }, 1000);
-
+    let vehiclePositions = [];
+    let activeRoutes = [];
+    const fetchInterval = 2000; 
+  
+    async function fetchVehiclePosition() {
+      try {
+        const response = await fetch('https://passio3.com/harvard/passioTransit/gtfs/realtime/vehiclePositions.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        
+        vehiclePositions = data.entity.map(entity => ({
+          id: entity.vehicle.vehicle.id,
+          label: entity.vehicle.vehicle.label,
+          latitude: entity.vehicle.position.latitude,
+          longitude: entity.vehicle.position.longitude,
+          trip: parseInt(entity.vehicle.trip.trip_id, 10)
+        }));
+      } catch (error) {
+        console.error('Failed to fetch vehicle position data:', error);
+      }
+    }
+  
     function calculateStopPositions(schedule, stops) {
     const totalSeconds = schedule.reduce((acc, curr) => acc + curr[2], 0);
     let cumulativeSeconds = 0;
-    return schedule.map(([origin, destination, seconds], index) => {
+    return schedule.map(([_, destination, seconds], index) => {
       cumulativeSeconds += seconds;
       const progress = totalSeconds > 0 ? cumulativeSeconds / totalSeconds : 0;
       return {
@@ -30,18 +39,34 @@
       };
     });
   }
+
+  onMount(() => {
+      fetchVehiclePosition(); // Initial fetch
+      const interval = setInterval(fetchVehiclePosition, fetchInterval);
+      
+      activeRoutes = findActiveRoutes();
   
-    // Function to calculate the x and y positions along the ellipse
-    function calculatePosition(angle) {
-      const radians = (angle * Math.PI) / 180;
-      return {
-        x: 100 + rx * Math.cos(radians),
-        y: 100 + ry * Math.sin(radians),
-      };
-    }
+      // Cleanup the interval when the component is destroyed
+      onDestroy(() => {
+        clearInterval(interval);
+      });
+    });
   </script>
-  
-  {#each routesInfo as { route_name, stops, schedule, color }}
+ 
+{#if vehiclePositions.length > 0}
+  <div>
+    <h2>Vehicle Positions</h2>
+    <ul>
+      {#each vehiclePositions as {id, label, latitude, longitude, trip}}
+        <li>Vehicle {label} (ID: {id}) - Latitude: {latitude}, Longitude: {longitude} Trip: {trip}</li>
+      {/each}
+    </ul>
+  </div>
+{:else}
+  <p>Loading vehicle positions...</p>
+{/if}
+
+{#each routesInfo as { route, route_name, stops, schedule, color, trip_ids }}
   <div>
     <svg width="900" height="600" viewBox="0 0 200 200">
       <ellipse cx="100" cy="100" rx="90" ry="45" stroke={color} stroke-width="2" fill="transparent" />
@@ -52,4 +77,14 @@
     </svg>
     <p>{route_name}</p>
   </div>
+  <div>
+    <ul>
+        {#each vehiclePositions as {id, label, latitude, longitude, trip}}
+            {#if trip}
+                <li>hi</li>
+            {/if}
+        {/each}
+    </ul>
+  </div>
+  
 {/each}

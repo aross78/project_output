@@ -2,7 +2,7 @@
     import { onMount, onDestroy } from 'svelte';
   
     let vehiclePositions = [];
-    const fetchInterval = 5000; // Fetch data every 5000 ms (5 seconds)
+    const fetchInterval = 2000; // Fetch data every 5000 ms (5 seconds)
   
     async function fetchVehiclePosition() {
       try {
