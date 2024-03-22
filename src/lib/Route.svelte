@@ -8,6 +8,19 @@
     let vehiclePositions = [];
     let activeRoutes = [];
     const fetchInterval = 2000; 
+
+    onMount(() => {
+      fetchVehiclePosition(); // Initial fetch
+      const interval = setInterval(async () => {
+        fetchVehiclePosition().then(getNextStops());
+        updateActiveRoutes();
+      }, fetchInterval);
+  
+      // Cleanup the interval when the component is destroyed
+      onDestroy(() => {
+        clearInterval(interval);
+      });
+    });
   
     async function fetchVehiclePosition() {
       try {
@@ -18,7 +31,8 @@
         const data = await response.json();
         
         vehiclePositions = data.entity.map(entity => ({
-          id: entity.vehicle.vehicle.id,
+          id: entity.id,
+          v_id: entity.vehicle.vehicle.id,
           label: entity.vehicle.vehicle.label,
           latitude: entity.vehicle.position.latitude,
           longitude: entity.vehicle.position.longitude,
@@ -30,6 +44,31 @@
         console.error('Failed to fetch vehicle position data:', error);
       }
     }
+
+async function getNextStops() {
+    const API_URL = 'https://passio3.com/harvard/passioTransit/gtfs/realtime/tripUpdates.json';
+
+    try {
+    const response = await fetch(API_URL);
+    if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const { entity: tripUpdates } = await response.json();
+
+    // For each vehicle, find its matching tripUpdate and determine the next stop
+    const vehiclesWithNextStop = vehiclePositions.map(vehicle => {
+      const vehicleUpdate = tripUpdates.find(update => update.id === vehicle.id);
+      const nextStop = vehicleUpdate.trip_update.stop_time_update[0];
+      const secondsUntilArrival = nextStop.arrival.time - Math.floor(Date.now() / 1000);
+
+        return { ...vehicle, nextStop: nextStop.stop_id, secondsUntilArrival };
+    });
+
+    vehiclePositions = vehiclesWithNextStop;
+    } catch (error) {
+    console.error('Failed to fetch or process trip updates:', error);
+    }
+}
   
     function calculateStopPositions(schedule, stops) {
     const totalSeconds = schedule.reduce((acc, curr) => acc + curr[2], 0);
@@ -50,23 +89,14 @@
       route.trip_ids.some(tripId => vehiclePositions.some(vehicle => vehicle.trip === tripId))
     );
   }
-
-  onMount(() => {
-      fetchVehiclePosition(); // Initial fetch
-      const interval = setInterval(async () => {
-        fetchVehiclePosition();
-        updateActiveRoutes();
-      }, fetchInterval);
-  
-      // Cleanup the interval when the component is destroyed
-      onDestroy(() => {
-        clearInterval(interval);
-      });
-    });
   </script>
 
 {#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
   <p>{route_name}</p>
+{/each}
+
+{#each vehiclePositions as {id, label, latitude, longitude, trip, nextStop, v_route_name, secondsUntilArrival}}
+        <li>Vehicle: {v_route_name} next stop: {nextStop} in {secondsUntilArrival}</li>
 {/each}
  
 {#if vehiclePositions.length > 0}
