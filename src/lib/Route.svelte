@@ -10,6 +10,9 @@
     let activeRoutes = [];
     let inactiveRoutes = [];
     let map;
+    let selectedStop = {};
+    let alarmDuration = {};
+    let alarmSetupVisible = {};
     const fetchInterval = 2000; 
 
     let cars = [
@@ -125,11 +128,7 @@ async function getNextStops() {
             inactiveRoutes.push(route);
         }
     });
-
-    // activeRoutes = routesInfo.filter(route => 
-    //   route.trip_ids.some(tripId => vehiclePositions.some(vehicle => vehicle.trip === tripId))
-//     );
-   }
+}
 
   function calculatePosition(angle) {
       const radians = (angle * Math.PI) / 180;
@@ -146,6 +145,14 @@ async function getNextStops() {
   function removeMap() {
     map.remove();
     map = null;
+  }
+
+  function toggleAlarmSetup(routeId) {
+    if (alarmSetupVisible[routeId] === undefined) {
+      alarmSetupVisible[routeId] = true;
+    } else {
+      alarmSetupVisible[routeId] = !alarmSetupVisible[routeId];
+    }
   }
 
   </script>
@@ -169,8 +176,31 @@ async function getNextStops() {
         />
       {/each}
     </svg>
-    <h2 style="color:white;">{route_name}</h2>
+    <h2 style="color:white;" id="routeName">
+        {route_name}
+        <button on:click={() => toggleAlarmSetup(route)}>Set Alarm</button>
+    </h2>
   </div>
+  {#if alarmSetupVisible[route]}
+  <div class="alarm-setup">
+    <select bind:value={selectedStop[route]}>
+      {#each Object.entries(stops) as [stopId, stopName]}
+        <option value={stopId}>{stopName}</option>
+      {/each}
+    </select>
+    <div>
+    <label>
+        <input type="radio" bind:group={alarmDuration[route]} value="1" /> 1 minute
+    </label>
+    <label>
+        <input type="radio" bind:group={alarmDuration[route]} value="3" /> 3 minutes
+    </label>
+    <label>
+        <input type="radio" bind:group={alarmDuration[route]} value="5" /> 5 minutes
+    </label>
+    </div>
+  </div>
+  {/if}
 {/each}
 
 <h3 style="color:white;">Inactive Routes:</h3>
