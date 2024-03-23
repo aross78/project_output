@@ -13,6 +13,7 @@
     let selectedStop = {};
     let alarmDuration = {};
     let alarmSetupVisible = {};
+    let alarmActive = {};
     const fetchInterval = 2000; 
 
     let cars = [
@@ -156,6 +157,11 @@ async function getNextStops() {
     }
   }
 
+  function submitAlarm(routeId) {
+    alarmActive[routeId] = true;
+    toggleAlarmSetup(routeId)
+  }
+
   </script>
 
 {#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
@@ -180,7 +186,8 @@ async function getNextStops() {
     </svg>
     <h2 style="color:white;" id="routeName">
         {route_name}
-        <button on:click={() => toggleAlarmSetup(route)}>Set Alarm</button>
+        <button on:click={() => toggleAlarmSetup(route)}>Set New Alarm</button>
+        {#if alarmActive[route]}<p>Alarm active!</p>{/if}
     </h2>
   </div>
   {#if alarmSetupVisible[route]}
@@ -201,6 +208,7 @@ async function getNextStops() {
         <input type="radio" bind:group={alarmDuration[route]} value="5" /> 5 minutes
     </label>
     </div>
+    <button on:click={() => submitAlarm(route)}>Submit Alarm</button>
   </div>
   {/if}
 {/each}
