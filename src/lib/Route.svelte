@@ -13,6 +13,7 @@
     let selectedStop = {};
     let alarmDuration = {};
     let alarmSetupVisible = {};
+    let alarmActive = {};
     const fetchInterval = 2000; 
 
     let cars = [
@@ -156,6 +157,11 @@ async function getNextStops() {
     }
   }
 
+  function submitAlarm(routeId) {
+    alarmActive[routeId] = true;
+    toggleAlarmSetup(routeId)
+  }
+
   </script>
 
 {#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
@@ -167,20 +173,32 @@ async function getNextStops() {
         <circle cx={cx} cy={cy} r="3" fill="white" stroke={color} />
         <text x={cx} y={cy + 7} font-size="5" text-anchor="middle" fill="white">{label}</text>
       {/each}
-      {#each cars as { id, position, lat, long }}
-        {@const { x, y } = calculatePosition(position)}
-        <image href="/images/shuttle_front.png"
-            x={x}
-            y={y}
-            height="10"
-            on:mouseenter={() => centerMapOnShuttle(lat, long)}
-            on:mouseleave={() => removeMap()}
-        />
-      {/each}
+      {#if route_name != "1636'er"}
+        {#each cars as { id, position, lat, long }}
+            {@const { x, y } = calculatePosition(position)}
+            <image href="/images/shuttle_front.png"
+                x={x}
+                y={y}
+                height="10"
+                on:mouseenter={() => centerMapOnShuttle(lat, long)}
+                on:mouseleave={() => removeMap()}
+            />
+        {/each}
+     {:else}
+     {@const { x, y } = calculatePosition(cars[0].position + 20)}
+     <image href="/images/shuttle_front.png"
+         x={x}
+         y={y}
+         height="10"
+         on:mouseenter={() => centerMapOnShuttle(cars[0].lat, cars[0].long)}
+         on:mouseleave={() => removeMap()}
+     />
+     {/if}
     </svg>
     <h2 style="color:white;" id="routeName">
         {route_name}
-        <button on:click={() => toggleAlarmSetup(route)}>Set Alarm</button>
+        <button on:click={() => toggleAlarmSetup(route)}>Set New Alarm</button>
+        {#if alarmActive[route]}<p>Alarm active!</p>{/if}
     </h2>
   </div>
   {#if alarmSetupVisible[route]}
@@ -201,6 +219,7 @@ async function getNextStops() {
         <input type="radio" bind:group={alarmDuration[route]} value="5" /> 5 minutes
     </label>
     </div>
+    <button on:click={() => submitAlarm(route)}>Submit Alarm</button>
   </div>
   {/if}
 {/each}
