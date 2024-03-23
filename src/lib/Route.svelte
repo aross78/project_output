@@ -108,27 +108,6 @@ async function getNextStops() {
   </script>
 
 {#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
-  <p>{route_name}</p>
-{/each}
-
-{#each vehiclePositions as {id, label, latitude, longitude, trip, nextStop, v_route_name, secondsUntilArrival}}
-        <li>Vehicle: {v_route_name} next stop: {nextStop} in {secondsUntilArrival}</li>
-{/each}
- 
-{#if vehiclePositions.length > 0}
-  <div>
-    <h2>Vehicle Positions</h2>
-    <ul>
-      {#each vehiclePositions as {id, label, latitude, longitude, trip}}
-        <li>Vehicle {label} (ID: {id}) - Latitude: {latitude}, Longitude: {longitude} Trip: {trip}</li>
-      {/each}
-    </ul>
-  </div>
-{:else}
-  <p>Loading vehicle positions...</p>
-{/if}
-
-{#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
   <div>
     <svg width="900" height="600" viewBox="0 0 200 200">
       <ellipse cx="100" cy="100" rx="90" ry="45" stroke={color} stroke-width="2" fill="transparent" />
@@ -145,12 +124,7 @@ async function getNextStops() {
         />
       {/each}
     </svg>
-    {#each vehiclePositions as { v_route_name }}
-        {#if v_route_name == route_name}
-            <p>One active shuttle on {route_name}</p>
-        {/if}
-    {/each}
-    <p>{route_name}</p>
+    <h2 style="color:white;">{route_name}</h2>
   </div>
 
 {/each}
