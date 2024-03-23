@@ -93,7 +93,7 @@ async function getNextStops() {
     }
 }
   
-    function calculateStopPositions(schedule, stops) {
+  function calculateStopPositions(schedule, stops) {
     const totalSeconds = schedule.reduce((acc, curr) => acc + curr[2], 0);
     let cumulativeSeconds = 0;
     return schedule.map(([_, destination, seconds], index) => {
@@ -139,8 +139,9 @@ async function getNextStops() {
       };
     }
 
-    function centerMapOnShuttle(lat, lng) {
+  function centerMapOnShuttle(lat, lng) {
     map = createMap('map', lat, lng);
+    marker = L.marker([lat, lng]).addTo(map);
   }
 
   function removeMap() {
@@ -152,10 +153,11 @@ async function getNextStops() {
 
 {#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
   <div>
+    <h2 style="color:white;">{route_name}</h2>
     <svg width="900" height="600" viewBox="0 0 200 200">
       <ellipse cx="100" cy="100" rx="90" ry="45" stroke={color} stroke-width="2" fill="transparent" />
       {#each calculateStopPositions(schedule, stops) as { cx, cy, label }}
-        <circle cx={cx} cy={cy} r="3" fill="none" stroke={color} />
+        <circle cx={cx} cy={cy} r="3" fill="white" stroke={color} />
         <text x={cx} y={cy + 7} font-size="5" text-anchor="middle" fill="white">{label}</text>
       {/each}
       {#each cars as { id, position, lat, long }}
@@ -169,13 +171,12 @@ async function getNextStops() {
         />
       {/each}
     </svg>
-    <h2 style="color:white;">{route_name}</h2>
   </div>
 {/each}
 
 <h3 style="color:white;">Inactive Routes:</h3>
 {#each inactiveRoutes as { route, route_name }}
-<t style="color:white;"> {route_name}, </t>
+<t style="color:white;"> {route_name},&nbsp;</t>
 {/each}
 
 <div id="map" style="height: 200px;"></div>
