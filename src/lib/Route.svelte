@@ -3,24 +3,47 @@
     import tripToRouteId from '../static/trip_to_route_id.json';
     import tripToRouteName from '../static/trip_to_route_name.json';
     import { onMount, onDestroy } from 'svelte';
+    import L from 'leaflet';
   
     let routesInfo = [...routesInfoData];
     let vehiclePositions = [];
     let activeRoutes = [];
+    let inactiveRoutes = [];
+    let map;
     const fetchInterval = 2000; 
 
+    let cars = [
+      { id: 1, position: 0, lat: 42.3729, long: -71.1171},
+      { id: 2, position: 180, lat: 42.3729, long: -71.1171} // Position in degrees around the ellipse
+    ];
+    
     onMount(() => {
-      fetchVehiclePosition(); // Initial fetch
-      const interval = setInterval(async () => {
-        fetchVehiclePosition().then(getNextStops());
-        updateActiveRoutes();
-      }, fetchInterval);
+        fetchVehiclePosition(); // Initial fetch
+        const interval = setInterval(async () => {
+            fetchVehiclePosition().then(getNextStops());
+            updateActiveRoutes();
+            cars = cars.map(car => ({
+            ...car,
+            position: (car.position + 5) % 360, // Move each car 5 degrees every second
+            }));
+        }, fetchInterval);
   
       // Cleanup the interval when the component is destroyed
       onDestroy(() => {
         clearInterval(interval);
       });
     });
+
+    function createMap(container, lat, lng){
+        let m = L.map(container, {preferCanvas: true}).setView([lat, lng], 14);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', 
+        {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 15,
+        }).addTo(m);
+
+        return m;
+    }
   
     async function fetchVehiclePosition() {
       try {
@@ -70,7 +93,7 @@ async function getNextStops() {
     }
 }
   
-    function calculateStopPositions(schedule, stops) {
+  function calculateStopPositions(schedule, stops) {
     const totalSeconds = schedule.reduce((acc, curr) => acc + curr[2], 0);
     let cumulativeSeconds = 0;
     return schedule.map(([_, destination, seconds], index) => {
@@ -85,50 +108,75 @@ async function getNextStops() {
   }
 
   async function updateActiveRoutes(){
-    activeRoutes = routesInfo.filter(route => 
-      route.trip_ids.some(tripId => vehiclePositions.some(vehicle => vehicle.trip === tripId))
-    );
+    activeRoutes = [];
+    inactiveRoutes = [];
+
+    routesInfo.forEach(route => {
+        // Check if any of the route's trip_ids match a trip in vehiclePositions
+        const isActive = route.trip_ids.some(tripId => 
+            vehiclePositions.some(vehicle => vehicle.trip === tripId)
+        );
+
+        if (isActive) {
+            // If the route is active, add it to the activeRoutes list
+            activeRoutes.push(route);
+        } else {
+            // If the route is inactive, add it to the inactiveRoutes list
+            inactiveRoutes.push(route);
+        }
+    });
+
+    // activeRoutes = routesInfo.filter(route => 
+    //   route.trip_ids.some(tripId => vehiclePositions.some(vehicle => vehicle.trip === tripId))
+//     );
+   }
+
+  function calculatePosition(angle) {
+      const radians = (angle * Math.PI) / 180;
+      return {
+        x: 100 + 90 * Math.cos(radians) - 5,
+        y: 100 + 45 * Math.sin(radians) - 5,
+      };
+    }
+
+  function centerMapOnShuttle(lat, lng) {
+    map = createMap('map', lat, lng);
+    marker = L.marker([lat, lng]).addTo(map);
   }
+
+  function removeMap() {
+    map.remove();
+    map = null;
+  }
+
   </script>
 
 {#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
-  <p>{route_name}</p>
-{/each}
-
-{#each vehiclePositions as {id, label, latitude, longitude, trip, nextStop, v_route_name, secondsUntilArrival}}
-        <li>Vehicle: {v_route_name} next stop: {nextStop} in {secondsUntilArrival}</li>
-{/each}
- 
-{#if vehiclePositions.length > 0}
   <div>
-    <h2>Vehicle Positions</h2>
-    <ul>
-      {#each vehiclePositions as {id, label, latitude, longitude, trip}}
-        <li>Vehicle {label} (ID: {id}) - Latitude: {latitude}, Longitude: {longitude} Trip: {trip}</li>
-      {/each}
-    </ul>
-  </div>
-{:else}
-  <p>Loading vehicle positions...</p>
-{/if}
-
-{#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
-  <div>
+    <h2 style="color:white;">{route_name}</h2>
     <svg width="900" height="600" viewBox="0 0 200 200">
       <ellipse cx="100" cy="100" rx="90" ry="45" stroke={color} stroke-width="2" fill="transparent" />
       {#each calculateStopPositions(schedule, stops) as { cx, cy, label }}
-        <circle cx={cx} cy={cy} r="3" fill="none" stroke={color} />
+        <circle cx={cx} cy={cy} r="3" fill="white" stroke={color} />
         <text x={cx} y={cy + 7} font-size="5" text-anchor="middle" fill="white">{label}</text>
       {/each}
+      {#each cars as { id, position, lat, long }}
+        {@const { x, y } = calculatePosition(position)}
+        <image href="/images/shuttle_front.png"
+            x={x}
+            y={y}
+            height="10"
+            on:mouseenter={() => centerMapOnShuttle(lat, long)}
+            on:mouseleave={() => removeMap()}
+        />
+      {/each}
     </svg>
-    {#each vehiclePositions as { v_route_name }}
-        {#if v_route_name == route_name}
-            <p>One active shuttle on {route_name}</p>
-        {/if}
-    {/each}
-    <p>{route_name}</p>
   </div>
-
 {/each}
 
+<h3 style="color:white;">Inactive Routes:</h3>
+{#each inactiveRoutes as { route, route_name }}
+<t style="color:white;"> {route_name},&nbsp;</t>
+{/each}
 
+<div id="map" style="height: 200px;"></div>
