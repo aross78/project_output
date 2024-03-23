@@ -3,6 +3,7 @@
     import tripToRouteId from '../static/trip_to_route_id.json';
     import tripToRouteName from '../static/trip_to_route_name.json';
     import { onMount, onDestroy } from 'svelte';
+    import L from 'leaflet';
   
     let routesInfo = [...routesInfoData];
     let vehiclePositions = [];
@@ -10,20 +11,27 @@
     const fetchInterval = 2000; 
 
     let cars = [
-      { id: 1, position: 0 },
-      { id: 2, position: 180 } // Position in degrees around the ellipse
+      { id: 1, position: 0, lat: 0, long: 0},
+      { id: 2, position: 180, lat: 0, long: 0 } // Position in degrees around the ellipse
     ];
 
+    let map;
+    
+
     onMount(() => {
-      fetchVehiclePosition(); // Initial fetch
-      const interval = setInterval(async () => {
-        fetchVehiclePosition().then(getNextStops());
-        updateActiveRoutes();
-        cars = cars.map(car => ({
-        ...car,
-        position: (car.position + 5) % 360, // Move each car 5 degrees every second
-      }));
-      }, fetchInterval);
+        fetchVehiclePosition(); // Initial fetch
+        map = L.map('map').setView([51.505, -0.09], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+        const interval = setInterval(async () => {
+            fetchVehiclePosition().then(getNextStops());
+            updateActiveRoutes();
+            cars = cars.map(car => ({
+            ...car,
+            position: (car.position + 5) % 360, // Move each car 5 degrees every second
+            }));
+        }, fetchInterval);
   
       // Cleanup the interval when the component is destroyed
       onDestroy(() => {
@@ -105,7 +113,18 @@ async function getNextStops() {
         y: 100 + 45 * Math.sin(radians) - 5,
       };
     }
+
+    function centerMapOnShuttle(lat, lng) {
+    map.setView([lat, lng], 16); // Adjust zoom level as needed
+  }
+
+  function resetMapCenter() {
+    map.setView([51.505, -0.09], 13); // Return to default or broader view
+  }
+
   </script>
+
+<div id="map" style="height: 200px;"></div>
 
 {#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
   <div>
@@ -121,6 +140,8 @@ async function getNextStops() {
             x={x}
             y={y}
             height="10"
+            on:mouseenter={() => centerMapOnShuttle(car.lat, car.long)}
+            on:mouseleave={() => resetMapCenter()}
         />
       {/each}
     </svg>
