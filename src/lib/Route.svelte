@@ -8,6 +8,7 @@
     let routesInfo = [...routesInfoData];
     let vehiclePositions = [];
     let activeRoutes = [];
+    let inactiveRoutes = [];
     let map;
     const fetchInterval = 2000; 
 
@@ -107,10 +108,28 @@ async function getNextStops() {
   }
 
   async function updateActiveRoutes(){
-    activeRoutes = routesInfo.filter(route => 
-      route.trip_ids.some(tripId => vehiclePositions.some(vehicle => vehicle.trip === tripId))
-    );
-  }
+    activeRoutes = [];
+    inactiveRoutes = [];
+
+    routesInfo.forEach(route => {
+        // Check if any of the route's trip_ids match a trip in vehiclePositions
+        const isActive = route.trip_ids.some(tripId => 
+            vehiclePositions.some(vehicle => vehicle.trip === tripId)
+        );
+
+        if (isActive) {
+            // If the route is active, add it to the activeRoutes list
+            activeRoutes.push(route);
+        } else {
+            // If the route is inactive, add it to the inactiveRoutes list
+            inactiveRoutes.push(route);
+        }
+    });
+
+    // activeRoutes = routesInfo.filter(route => 
+    //   route.trip_ids.some(tripId => vehiclePositions.some(vehicle => vehicle.trip === tripId))
+//     );
+   }
 
   function calculatePosition(angle) {
       const radians = (angle * Math.PI) / 180;
@@ -124,7 +143,7 @@ async function getNextStops() {
     map = createMap('map', lat, lng);
   }
 
-  function resetMapCenter() {
+  function removeMap() {
     map.remove();
     map = null;
   }
@@ -146,13 +165,17 @@ async function getNextStops() {
             y={y}
             height="10"
             on:mouseenter={() => centerMapOnShuttle(lat, long)}
-            on:mouseleave={() => resetMapCenter()}
+            on:mouseleave={() => removeMap()}
         />
       {/each}
     </svg>
     <h2 style="color:white;">{route_name}</h2>
   </div>
+{/each}
 
+<h3 style="color:white;">Inactive Routes:</h3>
+{#each inactiveRoutes as { route, route_name }}
+<t style="color:white;"> {route_name}, </t>
 {/each}
 
 <div id="map" style="height: 200px;"></div>
