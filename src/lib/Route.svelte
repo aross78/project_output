@@ -9,11 +9,20 @@
     let activeRoutes = [];
     const fetchInterval = 2000; 
 
+    let cars = [
+      { id: 1, position: 0 },
+      { id: 2, position: 180 } // Position in degrees around the ellipse
+    ];
+
     onMount(() => {
       fetchVehiclePosition(); // Initial fetch
       const interval = setInterval(async () => {
         fetchVehiclePosition().then(getNextStops());
         updateActiveRoutes();
+        cars = cars.map(car => ({
+        ...car,
+        position: (car.position + 5) % 360, // Move each car 5 degrees every second
+      }));
       }, fetchInterval);
   
       // Cleanup the interval when the component is destroyed
@@ -89,6 +98,13 @@ async function getNextStops() {
       route.trip_ids.some(tripId => vehiclePositions.some(vehicle => vehicle.trip === tripId))
     );
   }
+  function calculatePosition(angle) {
+      const radians = (angle * Math.PI) / 180;
+      return {
+        x: 100 + 90 * Math.cos(radians) - 5,
+        y: 100 + 45 * Math.sin(radians) - 5,
+      };
+    }
   </script>
 
 {#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
@@ -119,6 +135,14 @@ async function getNextStops() {
       {#each calculateStopPositions(schedule, stops) as { cx, cy, label }}
         <circle cx={cx} cy={cy} r="3" fill="none" stroke={color} />
         <text x={cx} y={cy + 7} font-size="5" text-anchor="middle" fill="white">{label}</text>
+      {/each}
+      {#each cars as { id, position }}
+        {@const { x, y } = calculatePosition(position)}
+        <image href="/images/shuttle_front.png"
+            x={x}
+            y={y}
+            height="10"
+        />
       {/each}
     </svg>
     {#each vehiclePositions as { v_route_name }}

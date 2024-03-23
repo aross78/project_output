@@ -292,7 +292,11 @@
         60
       ]
     ],
-    "color": "#000000"
+    "color": "#FBDB23",
+    "shuttle" : {
+      "left": "images/yellow_shuttle_left.gif",
+      "right": "images/yellow_shuttle_right.gif"
+    }
   },
   {
     "route_name":"HUIT Route",
