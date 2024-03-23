@@ -8,22 +8,16 @@
     let routesInfo = [...routesInfoData];
     let vehiclePositions = [];
     let activeRoutes = [];
+    let map;
     const fetchInterval = 2000; 
 
     let cars = [
-      { id: 1, position: 0, lat: 0, long: 0},
-      { id: 2, position: 180, lat: 0, long: 0 } // Position in degrees around the ellipse
+      { id: 1, position: 0, lat: 42.3729, long: -71.1171},
+      { id: 2, position: 180, lat: 42.3729, long: -71.1171} // Position in degrees around the ellipse
     ];
-
-    let map;
     
-
     onMount(() => {
         fetchVehiclePosition(); // Initial fetch
-        map = L.map('map').setView([51.505, -0.09], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
         const interval = setInterval(async () => {
             fetchVehiclePosition().then(getNextStops());
             updateActiveRoutes();
@@ -38,6 +32,17 @@
         clearInterval(interval);
       });
     });
+
+    function createMap(container, lat, lng){
+        let m = L.map(container, {preferCanvas: true}).setView([lat, lng], 14);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', 
+        {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 15,
+        }).addTo(m);
+
+        return m;
+    }
   
     async function fetchVehiclePosition() {
       try {
@@ -106,6 +111,7 @@ async function getNextStops() {
       route.trip_ids.some(tripId => vehiclePositions.some(vehicle => vehicle.trip === tripId))
     );
   }
+
   function calculatePosition(angle) {
       const radians = (angle * Math.PI) / 180;
       return {
@@ -115,16 +121,15 @@ async function getNextStops() {
     }
 
     function centerMapOnShuttle(lat, lng) {
-    map.setView([lat, lng], 16); // Adjust zoom level as needed
+    map = createMap('map', lat, lng);
   }
 
   function resetMapCenter() {
-    map.setView([51.505, -0.09], 13); // Return to default or broader view
+    map.remove();
+    map = null;
   }
 
   </script>
-
-<div id="map" style="height: 200px;"></div>
 
 {#each activeRoutes as { route, route_name, stops, schedule, color, trip_ids }}
   <div>
@@ -134,13 +139,13 @@ async function getNextStops() {
         <circle cx={cx} cy={cy} r="3" fill="none" stroke={color} />
         <text x={cx} y={cy + 7} font-size="5" text-anchor="middle" fill="white">{label}</text>
       {/each}
-      {#each cars as { id, position }}
+      {#each cars as { id, position, lat, long }}
         {@const { x, y } = calculatePosition(position)}
         <image href="/images/shuttle_front.png"
             x={x}
             y={y}
             height="10"
-            on:mouseenter={() => centerMapOnShuttle(car.lat, car.long)}
+            on:mouseenter={() => centerMapOnShuttle(lat, long)}
             on:mouseleave={() => resetMapCenter()}
         />
       {/each}
@@ -150,4 +155,4 @@ async function getNextStops() {
 
 {/each}
 
-
+<div id="map" style="height: 200px;"></div>
