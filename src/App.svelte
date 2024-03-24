@@ -4,7 +4,7 @@
 </script>
 
 <main>
-	<h1>Super Passio Go.</h1>
+	<h1>Super! Passio Go.</h1>
 	<Route />
 </main>
 
