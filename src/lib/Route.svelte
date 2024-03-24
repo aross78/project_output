@@ -16,12 +16,6 @@
   let alarmActive = {};
   const fetchInterval = 2000;
 
-  // Dummy cars for sake of demo
-  let cars = [
-    { id: 1, position: 0, lat: 42.3729, long: -71.1171 },
-    { id: 2, position: 180, lat: 42.3729, long: -71.1171 }, // Starting position in degrees around the ellipse
-  ];
-
   onMount(() => {
     fetchVehiclePosition(); 
     const interval = setInterval(async () => {
@@ -40,28 +34,26 @@
   });
 
   // Loads all vehicles active on API into an array of more-workable structs
-  async function fetchVehiclePosition() {
-    try {
-      const response = await fetch(
-        "https://passio3.com/harvard/passioTransit/gtfs/realtime/vehiclePositions.json",
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      const data = await response.json();
-
-      vehiclePositions = data.entity.map((entity) => ({
-        id: entity.id,
-        v_id: entity.vehicle.vehicle.id,
-        label: entity.vehicle.vehicle.label,
-        latitude: entity.vehicle.position.latitude,
-        longitude: entity.vehicle.position.longitude,
-        trip: parseInt(entity.vehicle.trip.trip_id, 10),
-        v_route_id: tripToRouteId[entity.vehicle.trip.trip_id],
-        v_route_name: tripToRouteName[entity.vehicle.trip.trip_id],
-      }));
-    } catch (error) {
-      console.error("Failed to fetch vehicle position data:", error);
+    async function fetchVehiclePosition() {
+      try {
+        const response = await fetch('https://passio3.com/harvard/passioTransit/gtfs/realtime/vehiclePositions.json');
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+        
+        vehiclePositions = data.entity.map(entity => ({
+          id: entity.id,
+          v_id: entity.vehicle.vehicle.id,
+          label: entity.vehicle.vehicle.label,
+          latitude: entity.vehicle.position.latitude,
+          longitude: entity.vehicle.position.longitude,
+          trip: parseInt(entity.vehicle.trip.trip_id, 10),
+          v_route_id: tripToRouteId[entity.vehicle.trip.trip_id],
+          v_route_name: tripToRouteName[entity.vehicle.trip.trip_id],
+        }));
+      } catch (error) {
+        console.error('Failed to fetch vehicle position data:', error);
     }
   }
 
@@ -136,7 +128,7 @@
     });
   }
 
-  // For shuttle positions around ellipse
+  // For shuttle positions around ellipse (temporary; does not yet factor in % progress)
   function calculatePosition(angle) {
     const radians = (angle * Math.PI) / 180;
     return {
@@ -164,11 +156,6 @@
     marker = L.marker([lat, lng]).addTo(map);
   }
 
-  function removeMap() {
-    map.remove();
-    map = null;
-  }
-
   function toggleAlarmSetup(routeId) {
     if (alarmSetupVisible[routeId] === undefined) {
       alarmSetupVisible[routeId] = true;
@@ -186,7 +173,6 @@
 <!-- Render ellipses only for active routes -->
 {#each activeRoutes as { route, route_name, stops, schedule, color }}
   <div>
-    <h2 style="color:white;">{route_name}</h2>
     <svg width="900" height="600" viewBox="0 0 200 200">
       <ellipse
         cx="100"
@@ -203,31 +189,17 @@
           >{label}</text
         >
       {/each}
-
-      <!-- For sake of demo, only want one shuttle on 1636'er -->
-      {#if route_name != "1636'er"}
-        {#each cars as { _, position, lat, long }}
-          {@const { x, y } = calculatePosition(position)}
-          <image
-            href="/images/shuttle_front.png"
-            {x}
-            {y}
-            height="10"
-            on:mouseenter={() => centerMapOnShuttle(lat, long)}
-            on:mouseleave={() => removeMap()}
-          />
-        {/each}
-      {:else}
-        {@const { x, y } = calculatePosition(cars[0].position + 20)}
-        <image
-          href="/images/shuttle_front.png"
-          {x}
-          {y}
-          height="10"
-          on:mouseenter={() => centerMapOnShuttle(cars[0].lat, cars[0].long)}
-          on:mouseleave={() => removeMap()}
-        />
-      {/if}
+      
+      <!-- Placeholder. Should render stationary shuttle w Widener Gate Lat/Long -->
+      {@const { x, y } = calculatePosition(0)}
+      <image
+        href="/images/shuttle_front.png"
+        {x}
+        {y}
+        height="10"
+        on:mouseenter={() => centerMapOnShuttle(42.3729, -71.1171)}
+        on:mouseleave={() => removeMap()}
+      />
     </svg>
     <!-- Add alarm feature/logic for each route -->
     <h2 style="color:white;" id="routeName">
@@ -263,6 +235,29 @@
 <h3 style="color:white;">Inactive Routes:</h3>
 {#each inactiveRoutes as { _, route_name }}
   <t style="color:white;"> {route_name},&nbsp;</t>
-{/each}
 
-<div id="map" style="height: 200px;"></div>
+<!-- Code for tinkering and troubleshooting API Call/Data / logic -->
+{#each activeRoutes as { route, route_name, stops, schedule, color }}
+  {#each vehiclePositions as { v_route_name }}
+          {#if v_route_name == route_name}
+              <p>One active shuttle on {route_name}</p>
+          {/if}
+  {/each}
+{/each}
+    
+{#each vehiclePositions as {id, label, latitude, longitude, trip, nextStop, v_route_name, secondsUntilArrival}}
+        <li>Vehicle: {v_route_name} next stop: {nextStop} in {secondsUntilArrival}</li>
+{/each}
+ 
+{#if vehiclePositions.length > 0}
+  <div>
+    <h2>Vehicle Positions</h2>
+    <ul>
+      {#each vehiclePositions as {id, label, latitude, longitude, trip}}
+        <li>Vehicle {label} (ID: {id}) - Latitude: {latitude}, Longitude: {longitude} Trip: {trip}</li>
+      {/each}
+    </ul>
+  </div>
+{:else}
+  <p>Loading vehicle positions...</p>
+{/if}
